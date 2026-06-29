@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Atividades e Status</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--primary:#2563eb;--dark:#0f172a;--muted:#64748b;--bg:#f4f7fb;}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#0f172a;}
+    .sidebar{position:fixed;left:0;top:0;width:250px;height:100vh;background:linear-gradient(180deg,#0f172a 0%,#111827 58%,#020617 100%);padding:20px 14px;display:flex;flex-direction:column;gap:12px;z-index:50;box-shadow:12px 0 32px rgba(15,23,42,.18);transition:.25s ease;}
+    .sidebar.collapsed{width:88px;padding:20px 12px;align-items:center;}
+    .brand{width:100%;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);border-radius:22px;padding:16px 14px;color:white;display:flex;align-items:center;gap:12px;margin-bottom:8px;overflow:hidden;}
+    .brand-icon{width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;flex:none;box-shadow:0 10px 24px rgba(37,99,235,.28);}
+    .brand-text{white-space:nowrap;line-height:1.15;transition:.2s}.brand-text strong{display:block;font-size:13px;letter-spacing:.06em}.brand-text span{font-size:11px;color:#cbd5e1}.sidebar.collapsed .brand-text{opacity:0;width:0;overflow:hidden;}
+    .sidebar-toggle{width:100%;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#e5e7eb;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.2s;}
+    .sidebar-toggle:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+    .side-btn{width:100%;height:52px;border-radius:17px;border:1px solid transparent;color:#cbd5e1;font-weight:800;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:12px;padding:0 14px;background:transparent;transition:.2s;overflow:hidden;}
+    .side-btn:hover{background:rgba(255,255,255,.08);color:white;transform:translateX(2px)}.side-btn.active{background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;box-shadow:0 12px 28px rgba(79,70,229,.34)}
+    .side-ico{font-size:20px;width:26px;text-align:center;flex:none}.side-label{white-space:nowrap;transition:.2s}.sidebar.collapsed .side-btn{width:58px;padding:0;justify-content:center}.sidebar.collapsed .side-label,.sidebar.collapsed .toggle-text{opacity:0;width:0;overflow:hidden;display:none;}
+    .content{margin-left:280px;padding:32px;transition:.25s ease;} body.sidebar-collapsed .content{margin-left:112px;}
+    .card{background:#fff;border-radius:22px;padding:24px;box-shadow:0 4px 18px rgba(15,23,42,.06);border:1px solid #e5e7eb;}
+    .table-hover:hover{background:#f3f6ff;transition:.2s;}.filter-field{display:flex;flex-direction:column;gap:6px}.filter-field label{font-size:12px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.04em} input,select,textarea{outline:none}.input{border:1px solid #d1d5db;border-radius:14px;padding:12px 14px;background:#fff;width:100%;}.btn{border-radius:14px;padding:12px 18px;font-weight:800;transition:.18s;}.btn:hover{transform:translateY(-1px)}.btn-blue{background:#2563eb;color:#fff}.btn-blue:hover{background:#1d4ed8}.btn-dark{background:#0f172a;color:#fff}.btn-gray{background:#f1f5f9;color:#334155}.btn-red{background:#ef4444;color:#fff}.pill{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap;}
+    .auto-refresh-box{position:fixed;right:26px;top:26px;z-index:60;background:rgba(255,255,255,.94);border:1px solid #dbe3ef;border-radius:999px;padding:8px 14px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px rgba(15,23,42,.14);backdrop-filter:blur(16px);font-size:12px;font-weight:900;color:#334155;}
+    .auto-icon{width:34px;height:34px;border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900}.auto-dot{width:9px;height:9px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 5px rgba(34,197,94,.13)}.auto-dot.paused{background:#94a3b8;box-shadow:0 0 0 5px rgba(148,163,184,.14)}.auto-dot.loading{background:#f59e0b;box-shadow:0 0 0 5px rgba(245,158,11,.16)}
+    .hidden{display:none!important}.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-box{background:#fff;border-radius:24px;width:100%;max-width:640px;padding:28px;box-shadow:0 24px 80px rgba(15,23,42,.28)}
+    @media(max-width:780px){.sidebar{width:84px;padding:16px 10px}.brand-text,.side-label,.toggle-text{display:none}.content{margin-left:100px;padding:20px}.auto-refresh-box{right:14px;top:14px}.card{padding:18px}}
+  </style>
+</head>
+<body>
+  <div id="sidebar" class="sidebar">
+    <div class="brand"><div class="brand-icon">J</div><div class="brand-text"><strong id="crmNomeMenu">CRM TEXTO</strong><span>Atividades e Status</span></div></div>
+    <button id="btnToggleSidebar" onclick="toggleSidebar()" class="sidebar-toggle"><span>☰</span><span class="toggle-text">Menu</span></button>
+    <button id="navAtividades" onclick="abrirAba('atividades')" class="side-btn active"><span class="side-ico">📋</span><span class="side-label">Atividades</span></button>
+    <button id="navStatus" onclick="abrirAba('status')" class="side-btn"><span class="side-ico">📦</span><span class="side-label">Status</span></button>
+  </div>
+
+  <div id="autoRefreshBox" class="auto-refresh-box hidden" title="Atualização automática da aba Status"><span class="auto-icon">↻</span><span id="autoDot" class="auto-dot"></span><span id="autoStatus">Status automático • 15s</span></div>
+
+  <main class="content">
+    <section id="painelAtividades">
+      <div class="flex justify-between items-center mb-10 flex-wrap gap-4">
+        <div><h1 class="text-4xl font-bold text-gray-800">Atividades</h1><p class="text-gray-500 mt-2">Controle de rotina comercial sem gráficos e sem valores.</p></div>
+        <button onclick="abrirFormularioAtividade()" class="btn btn-blue">Nova Atividade</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card"><p class="text-gray-500 mb-2">Atividades</p><h2 id="ativTotal" class="text-3xl font-bold text-blue-600">0</h2></div>
+        <div class="card"><p class="text-gray-500 mb-2">Hoje</p><h2 id="ativHoje" class="text-3xl font-bold text-green-600">0</h2></div>
+        <div class="card"><p class="text-gray-500 mb-2">Clientes</p><h2 id="ativClientes" class="text-3xl font-bold text-purple-600">0</h2></div>
+        <div class="card"><p class="text-gray-500 mb-2">Tipo destaque</p><h2 id="ativTipoTop" class="text-2xl font-bold text-orange-500">-</h2></div>
+      </div>
+
+      <div id="formularioAtividadeCard" class="card mb-8 hidden">
+        <div class="flex justify-between items-center mb-5"><h2 id="atividadeTituloFormulario" class="text-2xl font-bold text-gray-700">Registrar Atividade</h2><button onclick="fecharFormularioAtividade()" class="btn btn-gray">Fechar</button></div>
+        <input id="atividadeIdEdicao" type="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+          <div class="filter-field"><label>Data</label><input id="atividadeData" type="date" class="input"></div>
+          <div class="filter-field"><label>Tipo</label><select id="atividadeTipo" class="input"><option>Orçamento</option><option>Pedido</option><option>Ligação</option><option>Reunião</option><option>Follow-up</option><option>Outros</option></select></div>
+          <div class="filter-field"><label>Cliente</label><input id="atividadeCliente" type="text" class="input" placeholder="Nome do cliente"></div>
+        </div>
+        <div class="filter-field mb-5"><label>Feedback</label><textarea id="atividadeFeedback" rows="4" class="input resize-none" placeholder="Descreva o retorno, próximos passos ou observações..."></textarea></div>
+        <button onclick="salvarAtividadeComercial()" class="btn btn-blue">Salvar Atividade</button>
+        <p id="atividadeMensagem" class="text-sm mt-3 text-gray-500"></p>
+      </div>
+
+      <div class="card mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <div class="filter-field"><label>Tipo</label><select id="filtroAtividadeTipo" onchange="renderAtividadesComerciais()" class="input"><option value="Todos">Todos</option><option>Orçamento</option><option>Pedido</option><option>Ligação</option><option>Reunião</option><option>Follow-up</option><option>Outros</option></select></div>
+          <div class="filter-field"><label>Data inicial</label><input id="filtroAtividadeDataInicio" onchange="renderAtividadesComerciais()" type="date" class="input"></div>
+          <div class="filter-field"><label>Data final</label><input id="filtroAtividadeDataFim" onchange="renderAtividadesComerciais()" type="date" class="input"></div>
+          <div class="filter-field"><label>Buscar cliente</label><input id="filtroAtividadeCliente" oninput="renderAtividadesComerciais()" type="text" class="input" placeholder="Cliente"></div>
+          <button onclick="limparFiltrosAtividades()" class="btn btn-gray">Limpar filtros</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-3"><h2 class="text-2xl font-bold text-gray-700">Histórico de Atividades</h2><button onclick="exportarAtividadesCSV()" class="btn btn-dark">Exportar CSV</button></div>
+        <div class="overflow-x-auto"><table class="w-full"><thead><tr class="border-b text-left text-gray-500"><th class="pb-4">Data</th><th class="pb-4">Hora</th><th class="pb-4">Tipo</th><th class="pb-4">Cliente</th><th class="pb-4">Feedback</th><th class="pb-4">Editado em</th><th class="pb-4 text-center">Ações</th></tr></thead><tbody id="atividadesTabela"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="painelStatus" class="hidden">
+      <div class="flex justify-between items-center mb-10 flex-wrap gap-4">
+        <div><h1 class="text-4xl font-bold text-gray-800">Status</h1><p class="text-gray-500 mt-2">Consulta textual da planilha, sem valores e sem gráficos.</p></div>
+        <button onclick="abrirModalConfigStatus()" class="btn btn-dark">Configurar Planilha</button>
+      </div>
+
+      <div id="statusSemConfig" class="card mb-8 border-l-4 border-blue-600">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Primeiro acesso</h2>
+        <p class="text-gray-500 mb-5">Configure a planilha e as colunas de texto para liberar a aba Status neste navegador.</p>
+        <button onclick="abrirModalConfigStatus()" class="btn btn-blue">Configurar agora</button>
+      </div>
+
+      <div id="statusConteudo" class="hidden">
+        <div class="card mb-8">
+          <div class="flex justify-between items-center mb-5 flex-wrap gap-3"><div><h2 class="text-2xl font-bold text-gray-700">Filtros</h2><p id="statusMapeamentoAtual" class="text-gray-500 mt-1 text-sm">Mapeamento atual: -</p></div><button onclick="carregarStatusManual()" class="btn btn-blue">Atualizar</button></div>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div class="filter-field md:col-span-2"><label>Buscar</label><input id="statusBusca" oninput="renderStatusPedidos()" type="text" class="input" placeholder="Integrador, cliente, pedido ou status"></div>
+            <div class="filter-field"><label>Status Manual</label><select id="statusFiltroManual" onchange="renderStatusPedidos()" class="input"><option value="Todos">Todos</option></select></div>
+            <div class="filter-field"><label>Status Logística</label><select id="statusFiltroLogistica" onchange="renderStatusPedidos()" class="input"><option value="Todos">Todos</option></select></div>
+            <button onclick="filtrarAguardandoPagamento()" class="btn" style="background:#f97316;color:#fff">Aguard. Pagamento</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="card"><p class="text-gray-500 mb-2">Total filtrado</p><h2 id="statusTotalPedidos" class="text-3xl font-bold text-blue-600">0</h2></div>
+          <div class="card"><p class="text-gray-500 mb-2">Aguardando Pagamento</p><h2 id="statusAguardandoPagamento" class="text-3xl font-bold text-orange-500">0</h2></div>
+          <div class="card"><p class="text-gray-500 mb-2">Sem Status Manual</p><h2 id="statusSemManual" class="text-3xl font-bold text-red-500">0</h2></div>
+          <div class="card"><p class="text-gray-500 mb-2">Sem Retorno Logística</p><h2 id="statusSemLogistica" class="text-3xl font-bold text-purple-600">0</h2></div>
+        </div>
+
+        <div class="card"><div class="flex justify-between items-center mb-6 flex-wrap gap-3"><h2 class="text-2xl font-bold text-gray-700">Lista de Status</h2><p id="statusInfoLista" class="text-sm text-gray-500">-</p></div><div class="overflow-x-auto"><table class="w-full"><thead><tr class="border-b text-left text-gray-500"><th class="pb-4 cursor-pointer" onclick="ordenarStatus('integrador')">Integrador</th><th class="pb-4 cursor-pointer" onclick="ordenarStatus('clienteFinal')">Cliente Final</th><th class="pb-4 cursor-pointer" onclick="ordenarStatus('numeroPedido')">Pedido</th><th class="pb-4 cursor-pointer" onclick="ordenarStatus('statusManual')">Status Manual</th><th class="pb-4 cursor-pointer" onclick="ordenarStatus('statusLogistica')">Retorno Logística</th></tr></thead><tbody id="statusPedidosTabela"></tbody></table></div></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="modalConfigStatus" class="modal">
+    <div class="modal-box">
+      <div class="flex justify-between items-start gap-4 mb-6"><div><h2 class="text-2xl font-bold text-gray-800">Configurar Status</h2><p class="text-gray-500 mt-1">Cada navegador salva sua própria configuração.</p></div><button onclick="fecharModalConfigStatus()" class="btn btn-gray">X</button></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+        <div class="filter-field md:col-span-2"><label>URL da Planilha</label><input id="configSheetUrl" class="input" placeholder="https://docs.google.com/spreadsheets/d/.../edit"></div>
+        <div class="filter-field"><label>Sheet ID</label><input id="configSheetId" class="input" placeholder="Preenchido pela URL ou manual"></div>
+        <div class="filter-field"><label>GID da aba</label><input id="configGid" class="input" placeholder="Ex: 555097355"></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div class="filter-field"><label>Integrador</label><input id="configColIntegrador" class="input uppercase" placeholder="A"></div>
+        <div class="filter-field"><label>Cliente Final</label><input id="configColClienteFinal" class="input uppercase" placeholder="C"></div>
+        <div class="filter-field"><label>Nº Pedido</label><input id="configColNumeroPedido" class="input uppercase" placeholder="D"></div>
+        <div class="filter-field"><label>Status Manual</label><input id="configColStatusManual" class="input uppercase" placeholder="J"></div>
+        <div class="filter-field"><label>Status Logística</label><input id="configColStatusLogistica" class="input uppercase" placeholder="K"></div>
+      </div>
+      <div class="bg-slate-50 rounded-2xl p-4 mb-6 text-sm text-slate-600">Padrão sugerido: <b>A</b> Integrador • <b>C</b> Cliente Final • <b>D</b> Pedido • <b>J</b> Status Manual • <b>K</b> Status Logística.</div>
+      <div class="flex gap-3 flex-wrap"><button onclick="salvarConfigStatus()" class="btn btn-blue">Salvar Configuração</button><button onclick="preencherPadraoStatus()" class="btn btn-gray">Usar A/C/D/J/K</button><button onclick="limparConfigStatus()" class="btn btn-red">Limpar</button></div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_ATIVIDADES = "crm_texto_atividades_v1";
+const STORAGE_STATUS_CONFIG = "crm_texto_status_config_v1";
+const MAX_RENDER_STATUS = 350;
+let atividades = carregarAtividades();
+let statusRows = [];
+let statusSort = {campo:"integrador",dir:1};
+let autoTimer = null;
+
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("collapsed");document.body.classList.toggle("sidebar-collapsed");}
+function abrirAba(aba){
+  document.getElementById("painelAtividades").classList.toggle("hidden", aba!=="atividades");
+  document.getElementById("painelStatus").classList.toggle("hidden", aba!=="status");
+  document.getElementById("navAtividades").classList.toggle("active", aba==="atividades");
+  document.getElementById("navStatus").classList.toggle("active", aba==="status");
+  document.getElementById("autoRefreshBox").classList.toggle("hidden", aba!=="status");
+  if(aba==="atividades") renderAtividadesComerciais();
+  if(aba==="status"){inicializarStatus();}
+}
+function hojeISO(){return new Date().toISOString().slice(0,10)}
+function agoraHora(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function dataBR(iso){if(!iso)return"-";const [a,m,d]=String(iso).split("-");return `${d}/${m}/${a}`}
+function escapeHTML(v){return String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
+function normalizar(t){return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+function carregarAtividades(){try{return JSON.parse(localStorage.getItem(STORAGE_ATIVIDADES)||"[]")}catch(e){return[]}}
+function salvarAtividades(){localStorage.setItem(STORAGE_ATIVIDADES,JSON.stringify(atividades));}
+function abrirFormularioAtividade(id=""){
+  const card=document.getElementById("formularioAtividadeCard");card.classList.remove("hidden");document.getElementById("atividadeMensagem").innerText="";
+  if(id){const a=atividades.find(x=>x.id===id);if(!a)return;document.getElementById("atividadeTituloFormulario").innerText="Editar Atividade";document.getElementById("atividadeIdEdicao").value=a.id;document.getElementById("atividadeData").value=a.data;document.getElementById("atividadeTipo").value=a.tipo;document.getElementById("atividadeCliente").value=a.cliente;document.getElementById("atividadeFeedback").value=a.feedback;}
+  else{document.getElementById("atividadeTituloFormulario").innerText="Registrar Atividade";document.getElementById("atividadeIdEdicao").value="";document.getElementById("atividadeData").value=hojeISO();document.getElementById("atividadeTipo").value="Orçamento";document.getElementById("atividadeCliente").value="";document.getElementById("atividadeFeedback").value="";}
+}
+function fecharFormularioAtividade(){document.getElementById("formularioAtividadeCard").classList.add("hidden");}
+function salvarAtividadeComercial(){
+  const id=document.getElementById("atividadeIdEdicao").value;const data=document.getElementById("atividadeData").value||hojeISO();const tipo=document.getElementById("atividadeTipo").value;const cliente=document.getElementById("atividadeCliente").value.trim();const feedback=document.getElementById("atividadeFeedback").value.trim();
+  if(!cliente||!feedback){document.getElementById("atividadeMensagem").innerText="Preencha cliente e feedback.";return;}
+  if(id){const idx=atividades.findIndex(a=>a.id===id);if(idx>=0) atividades[idx]={...atividades[idx],data,tipo,cliente,feedback,editadoEm:new Date().toLocaleString("pt-BR")};}
+  else atividades.unshift({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),data,hora:agoraHora(),tipo,cliente,feedback,editadoEm:""});
+  salvarAtividades();fecharFormularioAtividade();renderAtividadesComerciais();
+}
+function excluirAtividade(id){if(!confirm("Excluir esta atividade?"))return;atividades=atividades.filter(a=>a.id!==id);salvarAtividades();renderAtividadesComerciais();}
+function limparFiltrosAtividades(){["filtroAtividadeDataInicio","filtroAtividadeDataFim","filtroAtividadeCliente"].forEach(id=>document.getElementById(id).value="");document.getElementById("filtroAtividadeTipo").value="Todos";renderAtividadesComerciais();}
+function renderAtividadesComerciais(){
+  const tipo=document.getElementById("filtroAtividadeTipo")?.value||"Todos";const ini=document.getElementById("filtroAtividadeDataInicio")?.value||"";const fim=document.getElementById("filtroAtividadeDataFim")?.value||"";const busca=normalizar(document.getElementById("filtroAtividadeCliente")?.value||"");
+  let lista=atividades.filter(a=>{if(tipo!=="Todos"&&a.tipo!==tipo)return false;if(ini&&a.data<ini)return false;if(fim&&a.data>fim)return false;if(busca&&!normalizar(a.cliente).includes(busca))return false;return true;});
+  document.getElementById("ativTotal").innerText=lista.length;document.getElementById("ativHoje").innerText=atividades.filter(a=>a.data===hojeISO()).length;document.getElementById("ativClientes").innerText=new Set(atividades.map(a=>normalizar(a.cliente)).filter(Boolean)).size;
+  const porTipo={};atividades.forEach(a=>porTipo[a.tipo]=(porTipo[a.tipo]||0)+1);const top=Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0];document.getElementById("ativTipoTop").innerText=top?top[0]:"-";
+  const tb=document.getElementById("atividadesTabela");if(!lista.length){tb.innerHTML='<tr><td colspan="7" class="py-8 text-center text-gray-400">Nenhuma atividade encontrada.</td></tr>';return;}
+  tb.innerHTML=lista.map(a=>`<tr class="border-b table-hover"><td class="py-4">${dataBR(a.data)}</td><td class="py-4">${escapeHTML(a.hora||"-")}</td><td class="py-4"><span class="pill bg-blue-100 text-blue-700">${escapeHTML(a.tipo)}</span></td><td class="py-4 font-bold">${escapeHTML(a.cliente)}</td><td class="py-4 max-w-[420px]">${escapeHTML(a.feedback)}</td><td class="py-4 text-sm text-gray-500">${escapeHTML(a.editadoEm||"-")}</td><td class="py-4 text-center"><button onclick="abrirFormularioAtividade('${a.id}')" class="btn btn-gray mr-2">Editar</button><button onclick="excluirAtividade('${a.id}')" class="btn btn-red">Excluir</button></td></tr>`).join("");
+}
+function exportarAtividadesCSV(){const linhas=[["Data","Hora","Tipo","Cliente","Feedback","Editado em"],...atividades.map(a=>[dataBR(a.data),a.hora,a.tipo,a.cliente,a.feedback,a.editadoEm])];baixarCSV("atividades.csv",linhas)}
+function baixarCSV(nome,linhas){const csv=linhas.map(l=>l.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(";")).join("\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;a.click();URL.revokeObjectURL(a.href);}
+
+function abrirModalConfigStatus(){preencherTelaConfigStatus();document.getElementById("modalConfigStatus").classList.add("open");}
+function fecharModalConfigStatus(){document.getElementById("modalConfigStatus").classList.remove("open");}
+function extrairSheetId(texto){const m=String(texto||"").match(/\/d\/([a-zA-Z0-9-_]+)/);return m?m[1]:"";}
+function colunaParaIndice(coluna){const letras=String(coluna||"A").toUpperCase().replace(/[^A-Z]/g,"");let n=0;for(let i=0;i<letras.length;i++)n=n*26+(letras.charCodeAt(i)-64);return Math.max(n-1,0)}
+function getCelula(row,index){return row.c?.[index]?.f ?? row.c?.[index]?.v ?? "";}
+function carregarConfigStatus(){try{return JSON.parse(localStorage.getItem(STORAGE_STATUS_CONFIG)||"null")}catch(e){return null}}
+function preencherTelaConfigStatus(){const c=carregarConfigStatus()||{};document.getElementById("configSheetUrl").value=c.sheetUrl||"";document.getElementById("configSheetId").value=c.sheetId||"";document.getElementById("configGid").value=c.gid||"";document.getElementById("configColIntegrador").value=c.colIntegrador||"";document.getElementById("configColClienteFinal").value=c.colClienteFinal||"";document.getElementById("configColNumeroPedido").value=c.colNumeroPedido||"";document.getElementById("configColStatusManual").value=c.colStatusManual||"";document.getElementById("configColStatusLogistica").value=c.colStatusLogistica||"";}
+function preencherPadraoStatus(){document.getElementById("configColIntegrador").value="A";document.getElementById("configColClienteFinal").value="C";document.getElementById("configColNumeroPedido").value="D";document.getElementById("configColStatusManual").value="J";document.getElementById("configColStatusLogistica").value="K";}
+function salvarConfigStatus(){const sheetUrl=document.getElementById("configSheetUrl").value.trim();const sheetId=document.getElementById("configSheetId").value.trim()||extrairSheetId(sheetUrl);const gid=document.getElementById("configGid").value.trim();const config={sheetUrl,sheetId,gid,colIntegrador:valCol("configColIntegrador","A"),colClienteFinal:valCol("configColClienteFinal","C"),colNumeroPedido:valCol("configColNumeroPedido","D"),colStatusManual:valCol("configColStatusManual","J"),colStatusLogistica:valCol("configColStatusLogistica","K")};if(!sheetId||!gid){alert("Informe a URL/SHEET ID e o GID da aba.");return;}localStorage.setItem(STORAGE_STATUS_CONFIG,JSON.stringify(config));fecharModalConfigStatus();inicializarStatus(true);}
+function valCol(id,padrao){return (document.getElementById(id).value.trim().toUpperCase()||padrao).replace(/[^A-Z]/g,"")||padrao}
+function limparConfigStatus(){if(!confirm("Limpar configuração desta aba Status?"))return;localStorage.removeItem(STORAGE_STATUS_CONFIG);statusRows=[];fecharModalConfigStatus();inicializarStatus(false);}
+function inicializarStatus(carregarAgora=false){const c=carregarConfigStatus();document.getElementById("statusSemConfig").classList.toggle("hidden",!!c);document.getElementById("statusConteudo").classList.toggle("hidden",!c);if(!c){pararAuto();return;}atualizarMapeamentoStatus();iniciarAuto();if(carregarAgora||!statusRows.length) carregarStatusManual();else renderStatusPedidos();}
+function atualizarMapeamentoStatus(){const c=carregarConfigStatus();if(!c)return;document.getElementById("statusMapeamentoAtual").innerText=`Mapeamento atual: ${c.colIntegrador} Integrador • ${c.colClienteFinal} Cliente Final • ${c.colNumeroPedido} Pedido • ${c.colStatusManual} Status Manual • ${c.colStatusLogistica} Logística`;}
+async function carregarStatusManual(){await carregarStatus(false)}
+async function carregarStatus(auto=false){const c=carregarConfigStatus();if(!c)return;setAutoStatus(auto?"Atualizando status...":"Carregando status...","loading");try{const url=`https://docs.google.com/spreadsheets/d/${c.sheetId}/gviz/tq?tqx=out:json&gid=${c.gid}&t=${Date.now()}`;const res=await fetch(url,{cache:"no-store"});const text=await res.text();const json=JSON.parse(text.substring(text.indexOf("{"),text.lastIndexOf("}")+1));const rows=json.table?.rows||[];statusRows=rows.map(r=>({integrador:String(getCelula(r,colunaParaIndice(c.colIntegrador))||"").trim(),clienteFinal:String(getCelula(r,colunaParaIndice(c.colClienteFinal))||"").trim(),numeroPedido:String(getCelula(r,colunaParaIndice(c.colNumeroPedido))||"").trim(),statusManual:String(getCelula(r,colunaParaIndice(c.colStatusManual))||"").trim()||"Sem status manual",statusLogistica:String(getCelula(r,colunaParaIndice(c.colStatusLogistica))||"").trim()||"Sem retorno logística"})).filter(x=>x.integrador||x.clienteFinal||x.numeroPedido||x.statusManual!=="Sem status manual"||x.statusLogistica!=="Sem retorno logística");popularFiltrosStatus(true);renderStatusPedidos();setAutoStatus("Status automático • 15s","ok");}catch(e){console.error(e);setAutoStatus("Erro ao atualizar status","paused");alert("Não foi possível carregar a planilha. Verifique o compartilhamento, SHEET ID e GID.");}}
+function popularFiltrosStatus(forcar=false){const manual=document.getElementById("statusFiltroManual"),log=document.getElementById("statusFiltroLogistica");const mAtual=manual.value||"Todos",lAtual=log.value||"Todos";const montar=(el,arr)=>{el.innerHTML='<option value="Todos">Todos</option>';[...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR")).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;el.appendChild(o);});};montar(manual,statusRows.map(x=>x.statusManual));montar(log,statusRows.map(x=>x.statusLogistica));if([...manual.options].some(o=>o.value===mAtual))manual.value=mAtual;if([...log.options].some(o=>o.value===lAtual))log.value=lAtual;}
+function getStatusClass(s){const n=normalizar(s);if(n.includes("aguardando pagamento"))return"bg-orange-100 text-orange-700";if(n.includes("liber"))return"bg-green-100 text-green-700";if(n.includes("financeiro"))return"bg-yellow-100 text-yellow-700";if(n.includes("nota"))return"bg-blue-100 text-blue-700";if(n.includes("link"))return"bg-purple-100 text-purple-700";if(n.includes("sem"))return"bg-gray-100 text-gray-600";return"bg-slate-100 text-slate-700";}
+function renderStatusPedidos(){const busca=normalizar(document.getElementById("statusBusca").value||"");const fm=document.getElementById("statusFiltroManual").value||"Todos";const fl=document.getElementById("statusFiltroLogistica").value||"Todos";let lista=statusRows.filter(x=>{const texto=normalizar(`${x.integrador} ${x.clienteFinal} ${x.numeroPedido} ${x.statusManual} ${x.statusLogistica}`);if(busca&&!texto.includes(busca))return false;if(fm!=="Todos"&&x.statusManual!==fm)return false;if(fl!=="Todos"&&x.statusLogistica!==fl)return false;return true;});if(statusSort?.campo)lista.sort((a,b)=>statusSort.dir*String(a[statusSort.campo]||"").localeCompare(String(b[statusSort.campo]||""),"pt-BR",{numeric:true}));document.getElementById("statusTotalPedidos").innerText=lista.length;document.getElementById("statusAguardandoPagamento").innerText=statusRows.filter(x=>normalizar(x.statusManual).includes("aguardando pagamento")).length;document.getElementById("statusSemManual").innerText=statusRows.filter(x=>x.statusManual==="Sem status manual").length;document.getElementById("statusSemLogistica").innerText=statusRows.filter(x=>x.statusLogistica==="Sem retorno logística").length;const tb=document.getElementById("statusPedidosTabela");if(!lista.length){tb.innerHTML='<tr><td colspan="5" class="py-8 text-center text-gray-400">Nenhum registro encontrado.</td></tr>';document.getElementById("statusInfoLista").innerText="0 registros";return;}const render=lista.slice(0,MAX_RENDER_STATUS);document.getElementById("statusInfoLista").innerText=lista.length>MAX_RENDER_STATUS?`Exibindo ${MAX_RENDER_STATUS} de ${lista.length} registros`:`${lista.length} registros`;tb.innerHTML=render.map(x=>`<tr class="border-b table-hover"><td class="py-4 font-semibold">${escapeHTML(x.integrador||"-")}</td><td class="py-4">${escapeHTML(x.clienteFinal||"-")}</td><td class="py-4 font-bold text-blue-600">${escapeHTML(x.numeroPedido||"-")}</td><td class="py-4"><span class="pill ${getStatusClass(x.statusManual)}">${escapeHTML(x.statusManual)}</span></td><td class="py-4"><span class="pill ${getStatusClass(x.statusLogistica)}">${escapeHTML(x.statusLogistica)}</span></td></tr>`).join("");}
+function ordenarStatus(campo){if(statusSort.campo===campo)statusSort.dir*=-1;else statusSort={campo,dir:1};renderStatusPedidos();}
+function filtrarAguardandoPagamento(){const sel=document.getElementById("statusFiltroManual");const opt=[...sel.options].find(o=>normalizar(o.value).includes("aguardando pagamento"));if(opt)sel.value=opt.value;renderStatusPedidos();}
+function setAutoStatus(txt,mode){document.getElementById("autoStatus").innerText=txt;const dot=document.getElementById("autoDot");dot.className="auto-dot"+(mode==="loading"?" loading":mode==="paused"?" paused":"");}
+function iniciarAuto(){pararAuto();setAutoStatus("Status automático • 15s","ok");autoTimer=setInterval(()=>{if(!document.getElementById("painelStatus").classList.contains("hidden"))carregarStatus(true)},15000)}
+function pararAuto(){if(autoTimer)clearInterval(autoTimer);autoTimer=null;setAutoStatus("Configure o Status","paused")}
+
+document.addEventListener("DOMContentLoaded",()=>{renderAtividadesComerciais();abrirAba("atividades");});
+</script>
+</body>
+</html>
